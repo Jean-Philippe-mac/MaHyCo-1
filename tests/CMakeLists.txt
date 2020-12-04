@@ -1,7 +1,9 @@
 # Test name is also test directory
 set( TEST_DIR "${CMAKE_CURRENT_LIST_DIR}" )
 
-set( TEST_NAMES "SODSTIFF_X_bi_mat_Lagrange_Euc"
+set( TEST_NAMES "SEDOV_Mono_Mat_Lagrange_cyl_csts"
+                "SEDOV_Mono_Mat_Lagrange_cart_csts"
+		"SODSTIFF_X_bi_mat_Lagrange_Euc"
                 "ADVECTION_X_Mono_mat_vnr_o1"
                 "ADVECTION_X_Mono_mat_Minmod_vnr_o2"
                 "ADVECTION_X_Mono_mat_Superbee_vnr_o2"

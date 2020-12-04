@@ -28,6 +28,7 @@ void Initialisations::initVarSEDOV() noexcept {
         double pInit = 1.e-6;
         double rhoInit = 1.;
         double rmin = options->threshold;  // depot sur 1 maille
+	if (cstmesh->cylindrical_mesh) rmin = cstmesh->minimum_radius + options->threshold;
         // double rmin = std::sqrt(dx*dx+dy*dy) + options->threshold;  // depot sur 4 maille
         double e1 = pInit / ((eos->gamma[0] - 1.0) * rhoInit);
         {
@@ -43,8 +44,8 @@ void Initialisations::initVarSEDOV() noexcept {
         if (isCenterCell) {
           //double total_energy_deposit = 0.244816 / (dx * dy);
 	  //double total_energy_deposit = 0.244816 / (4 * dx * dy);
-	  double total_energy_deposit = 5000.*4/Pi;
-	  //double total_energy_deposit = 5000./Pi;
+	  double total_energy_deposit = 5000.*4./Pi;
+	  if (cstmesh->cylindrical_mesh) total_energy_deposit = 5000.;
           m_internal_energy_n0(cCells) = e1 + total_energy_deposit;
         } else {
           m_internal_energy_n0(cCells) = e1;
@@ -76,6 +77,7 @@ void Initialisations::initVarBiSEDOV() noexcept {
         double pInit = 1.e-6;
         double rhoInit = 1.;
         double rmin = options->threshold;  // depot sur 1 maille
+	if (cstmesh->cylindrical_mesh) rmin = cstmesh->minimum_radius + options->threshold;
         double e1 = pInit / ((eos->gamma[0] - 1.0) * rhoInit);
         {
           auto nodesOfCellC(mesh->getNodesOfCell(cId));
@@ -88,10 +90,12 @@ void Initialisations::initVarBiSEDOV() noexcept {
           }
         }
         if (isCenterCell) {
-          double total_energy_deposit = 0.244816;
-          double dx = cstmesh->X_EDGE_LENGTH;
-          double dy = cstmesh->Y_EDGE_LENGTH;
-          m_internal_energy_n0(cCells) = e1 + 5000.*4/Pi;
+          //double total_energy_deposit = 0.244816;
+          //double dx = cstmesh->X_EDGE_LENGTH;
+          //double dy = cstmesh->Y_EDGE_LENGTH;
+	  double total_energy_deposit = 5000.*4/Pi;
+	  if (cstmesh->cylindrical_mesh) total_energy_deposit = 5000.;
+          m_internal_energy_n0(cCells) = e1 + total_energy_deposit;
 	    // + total_energy_deposit / (dx * dy);
         } else {
           m_internal_energy_n0(cCells) = e1;

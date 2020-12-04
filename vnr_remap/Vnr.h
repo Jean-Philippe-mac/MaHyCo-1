@@ -353,7 +353,7 @@ class Vnr {
   void computeTau() noexcept;
 
   void updateEnergy() noexcept;
-  void updateEnergycqs() noexcept;
+  void updateEnergycsts() noexcept;
   void updateEnergyForTotalEnergyConservation() noexcept;
   
   void computeDivU() noexcept;

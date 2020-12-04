@@ -39,8 +39,8 @@ void Vnr::updateNodeBoundaryConditions() noexcept {
           reduction1 = sumR1(
               reduction1,
               (m_pressure_n(cCells) + m_pseudo_viscosity_n(cCells)) *
-                  (m_cqs(cCells, pNodesOfCellC) +
-                   symmetricVector(m_cqs(cCells, pNodesOfCellC), {1.0, 0.0})));
+                  (m_cqs_n(cCells, pNodesOfCellC) +
+                   symmetricVector(m_cqs_n(cCells, pNodesOfCellC), {1.0, 0.0})));
         }
       }
       m_node_velocity_nplus1(pNodes) =
@@ -69,8 +69,8 @@ void Vnr::updateNodeBoundaryConditions() noexcept {
           reduction2 = sumR1(
               reduction2,
               (m_pressure_n(cCells) + m_pseudo_viscosity_n(cCells)) *
-                  (m_cqs(cCells, pNodesOfCellC) +
-                   symmetricVector(m_cqs(cCells, pNodesOfCellC), {1.0, 0.0})));
+                  (m_cqs_n(cCells, pNodesOfCellC) +
+                   symmetricVector(m_cqs_n(cCells, pNodesOfCellC), {1.0, 0.0})));
         }
       }
       m_node_velocity_nplus1(pNodes) =
@@ -98,8 +98,8 @@ void Vnr::updateNodeBoundaryConditions() noexcept {
           reduction3 = sumR1(
               reduction3,
               (m_pressure_n(cCells) + m_pseudo_viscosity_n(cCells)) *
-                  (m_cqs(cCells, pNodesOfCellC) +
-                   symmetricVector(m_cqs(cCells, pNodesOfCellC), {0.0, 1.0})));
+                  (m_cqs_n(cCells, pNodesOfCellC) +
+                   symmetricVector(m_cqs_n(cCells, pNodesOfCellC), {0.0, 1.0})));
         }
       }
       m_node_velocity_nplus1(pNodes) =
@@ -127,8 +127,8 @@ void Vnr::updateNodeBoundaryConditions() noexcept {
           reduction4 = sumR1(
               reduction4,
               (m_pressure_n(cCells) + m_pseudo_viscosity_n(cCells)) *
-                  (m_cqs(cCells, pNodesOfCellC) +
-                   symmetricVector(m_cqs(cCells, pNodesOfCellC), {0.0, 1.0})));
+                  (m_cqs_n(cCells, pNodesOfCellC) +
+                   symmetricVector(m_cqs_n(cCells, pNodesOfCellC), {0.0, 1.0})));
         }
       }
       m_node_velocity_nplus1(pNodes) =

@@ -264,6 +264,13 @@ void Remap::getBottomUpwindVelocity(const size_t BottomNode, const size_t pNode,
                   (signbottom * (varlp->XLagrange(pNode)[1] -
                                  varlp->XLagrange(BottomNode)[1]) -
                    gt->deltat_n * ubottom));
+    // energie cinetique
+    BottomupwindVelocity(pNode)[2] =
+        varlp->DualPhi(BottomNode)[2] +
+        order2 * (0.5 * gradDualPhimoins[2] *
+                  (signbottom * (varlp->XLagrange(pNode)[1] -
+                                 varlp->XLagrange(BottomNode)[1]) -
+                   gt->deltat_n * ubottom));
   } else {
     BottomupwindVelocity(pNode)[0] =
         varlp->DualPhi(pNode)[0] +
@@ -274,6 +281,13 @@ void Remap::getBottomUpwindVelocity(const size_t BottomNode, const size_t pNode,
     BottomupwindVelocity(pNode)[1] =
         varlp->DualPhi(pNode)[1] +
         order2 * (0.5 * gradDualPhi0[1] *
+                  (signbottom * (varlp->XLagrange(pNode)[1] -
+                                 varlp->XLagrange(BottomNode)[1]) -
+                   gt->deltat_n * ubottom));
+    // energie cinetique
+    BottomupwindVelocity(pNode)[2] =
+        varlp->DualPhi(pNode)[2] +
+        order2 * (0.5 * gradDualPhi0[2] *
                   (signbottom * (varlp->XLagrange(pNode)[1] -
                                  varlp->XLagrange(BottomNode)[1]) -
                    gt->deltat_n * ubottom));
@@ -304,6 +318,13 @@ void Remap::getTopUpwindVelocity(const size_t TopNode, const size_t pNode,
                   (signtop * (varlp->XLagrange(TopNode)[1] -
                               varlp->XLagrange(pNode)[1]) -
                    gt->deltat_n * utop));
+    // energie cinetique
+    TopupwindVelocity(pNode)[2] =
+      varlp->DualPhi(TopNode)[2] +
+      order2 * (0.5 * gradDualPhiplus[2] *
+		(signtop * (varlp->XLagrange(TopNode)[1] -
+			    varlp->XLagrange(pNode)[1]) -
+		 gt->deltat_n * utop));
   } else {
     TopupwindVelocity(pNode)[0] =
         varlp->DualPhi(pNode)[0] +
@@ -317,6 +338,14 @@ void Remap::getTopUpwindVelocity(const size_t TopNode, const size_t pNode,
                   (signtop * (varlp->XLagrange(TopNode)[1] -
                               varlp->XLagrange(pNode)[1]) -
                    gt->deltat_n * utop));
+    // energie cinetique
+    TopupwindVelocity(pNode)[2] =
+        varlp->DualPhi(pNode)[2] +
+        order2 * (0.5 * gradDualPhi0[2] *
+                  (signtop * (varlp->XLagrange(TopNode)[1] -
+                              varlp->XLagrange(pNode)[1]) -
+                   gt->deltat_n * utop));
+    
   }
 }
 
@@ -347,6 +376,14 @@ void Remap::getRightUpwindVelocity(const size_t RightNode, const size_t pNode,
                   (signright * (varlp->XLagrange(RightNode)[0] -
                                 varlp->XLagrange(pNode)[0]) -
                    gt->deltat_n * uright));
+    // energie cinetique
+    RightupwindVelocity(pNode)[2] =
+        varlp->DualPhi(RightNode)[2] +
+        order2 * (0.5 * gradDualPhiplus[2] *
+                  (signright * (varlp->XLagrange(RightNode)[0] -
+                                varlp->XLagrange(pNode)[0]) -
+                   gt->deltat_n * uright));
+    
   } else {
     RightupwindVelocity(pNode)[0] =
         varlp->DualPhi(pNode)[0] +
@@ -360,6 +397,13 @@ void Remap::getRightUpwindVelocity(const size_t RightNode, const size_t pNode,
                   (signright * (varlp->XLagrange(RightNode)[0] -
                                 varlp->XLagrange(pNode)[0]) -
                    gt->deltat_n * uright));
+    // energie cinetique
+    RightupwindVelocity(pNode)[2] =
+      varlp->DualPhi(pNode)[2] +
+      order2 * (0.5 * gradDualPhi0[2] *
+		(signright * (varlp->XLagrange(RightNode)[0] -
+			      varlp->XLagrange(pNode)[0]) -
+		 gt->deltat_n * uright));
   }
 }
 void Remap::getLeftUpwindVelocity(const size_t LeftNode, const size_t pNode,
@@ -387,6 +431,13 @@ void Remap::getLeftUpwindVelocity(const size_t LeftNode, const size_t pNode,
                   (signleft * (varlp->XLagrange(pNode)[0] -
                                varlp->XLagrange(LeftNode)[0]) -
                    gt->deltat_n * uleft));
+    // energie cinetique
+    LeftupwindVelocity(pNode)[2] =
+        varlp->DualPhi(LeftNode)[2] +
+        order2 * (0.5 * gradDualPhimoins[2] *
+                  (signleft * (varlp->XLagrange(pNode)[0] -
+                               varlp->XLagrange(LeftNode)[0]) -
+                   gt->deltat_n * uleft));    
   } else {
     LeftupwindVelocity(pNode)[0] =
         varlp->DualPhi(pNode)[0] +
@@ -397,6 +448,13 @@ void Remap::getLeftUpwindVelocity(const size_t LeftNode, const size_t pNode,
     LeftupwindVelocity(pNode)[1] =
         varlp->DualPhi(pNode)[1] +
         order2 * (0.5 * gradDualPhi0[1] *
+                  (signleft * (varlp->XLagrange(pNode)[0] -
+                               varlp->XLagrange(LeftNode)[0]) -
+                   gt->deltat_n * uleft));
+    // energie cinetique
+    LeftupwindVelocity(pNode)[2] =
+        varlp->DualPhi(pNode)[2] +
+        order2 * (0.5 * gradDualPhi0[2] *
                   (signleft * (varlp->XLagrange(pNode)[0] -
                                varlp->XLagrange(LeftNode)[0]) -
                    gt->deltat_n * uleft));

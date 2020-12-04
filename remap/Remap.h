@@ -88,10 +88,10 @@ class Remap {
   Kokkos::View<double*> BottomFluxMasse;
   Kokkos::View<RealArray1D<2>*> VerticalFaceOfNode;
   Kokkos::View<RealArray1D<2>*> HorizontalFaceOfNode;
-  Kokkos::View<RealArray1D<dim>*> TopupwindVelocity;
-  Kokkos::View<RealArray1D<dim>*> BottomupwindVelocity;
-  Kokkos::View<RealArray1D<dim>*> RightupwindVelocity;
-  Kokkos::View<RealArray1D<dim>*> LeftupwindVelocity;
+  Kokkos::View<RealArray1D<dimplus1>*> TopupwindVelocity;
+  Kokkos::View<RealArray1D<dimplus1>*> BottomupwindVelocity;
+  Kokkos::View<RealArray1D<dimplus1>*> RightupwindVelocity;
+  Kokkos::View<RealArray1D<dimplus1>*> LeftupwindVelocity;
   Kokkos::View<RealArray1D<nbequamax>*> gradDualPhi1;
   Kokkos::View<RealArray1D<nbequamax>*> gradDualPhi2;
 

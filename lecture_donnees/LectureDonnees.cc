@@ -29,7 +29,6 @@ void LectureDonneesClass::LectureDonnees(
     castestlib::CasTest::Test* test) {
   // string Fichier=argv[1];
   ifstream mesdonnees(Fichier);  // Ouverture d'un fichier en lecture
-  std::cout << " rentrer dans le fichier " << Fichier << std::endl;
   if (mesdonnees) {
     // Tout est prêt pour la lecture.
     string ligne;
@@ -47,6 +46,8 @@ void LectureDonneesClass::LectureDonnees(
         test->Nom = castestToOptions[valeur];
         std::cout << " Cas test " << valeur << " ( " << test->Nom << " ) "
                   << std::endl;
+	o->fichier_sortie1D+=valeur;
+        o->fichier_sortie1D+="-";
         mesdonnees.ignore();
 
         // on en deduit le nombre de materiaux du calcul
@@ -74,10 +75,13 @@ void LectureDonneesClass::LectureDonnees(
         if (test->Nom >= test->MonoRiderTx && test->Nom < test->RiderTx) {
           o->nbmat = 1;
         }
-        if (o->nbmat == 1)
+        if (o->nbmat == 1) {
           std::cout << " Cas test mono materiau " << std::endl;
-        else if (o->nbmat == 2)
+	  o->fichier_sortie1D+="Mono-";
+        } else if (o->nbmat == 2) {
           std::cout << " Cas test bi materiau " << std::endl;
+	  o->fichier_sortie1D+="Bi-";
+	}
       }
 
       else if (!strcmp(motcle, "NX")) {
@@ -158,6 +162,7 @@ void LectureDonneesClass::LectureDonnees(
         s->schema = schema_lagrange[valeur];
         std::cout << " schema Lagrange " << valeur << " ( " << s->schema
                   << " ) " << std::endl;
+	o->fichier_sortie1D+=valeur;
         mesdonnees.ignore();
       }
 
@@ -173,6 +178,7 @@ void LectureDonneesClass::LectureDonnees(
         std::cout << " Avec Projection " << valeur << " ( " << o->AvecProjection
                   << " ) " << std::endl;
         mesdonnees.ignore();
+	if (o->AvecProjection) o->fichier_sortie1D+="-euler";
       }
 
       else if (!strcmp(motcle, "PROJECTION_CONSERVATIVE")) {
@@ -181,6 +187,8 @@ void LectureDonneesClass::LectureDonnees(
         std::cout << " Projection conservative " << valeur << " ( "
                   << o->projectionConservative << " ) " << std::endl;
         mesdonnees.ignore();
+	if (o->projectionConservative) o->fichier_sortie1D+="-conservatif";
+	std::cout << "fichier de sortie : " << o->fichier_sortie1D << std::endl;
       }
 
       else if (!strcmp(motcle, "LIMITE_FRACTION_VOLUMIQUE")) {

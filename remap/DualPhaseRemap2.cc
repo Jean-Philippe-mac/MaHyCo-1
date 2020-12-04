@@ -22,7 +22,7 @@
  *   selon 3 methodes differentes (A1, A2, PB)
  *           getRightAndLeftFluxMasse...
  *     ou    getTopAndBottomFluxMasse...
- *   reconstruction de la vitesse a l'ordre 1 ou 2
+ *   reconstruction de la vitesse ou l'energie cinetique a l'ordre 1 ou 2
  *           getLeftUpwindVelocity, getRightUpwindVelocity
  *     ou    getBottomUpwindVelocity, getTopUpwindVelocity
  *
@@ -59,8 +59,8 @@ void Remap::computeDualUremap2() noexcept {
       if (options->methode_flux_masse == 2)
         getTopAndBottomFluxMassePB2(nbmat, pNode);
 
-      varlp->UDualremap2(pNode)[2] =
-          UDualremap1(pNode)[2] + BottomFluxMasse(pNode) - TopFluxMasse(pNode);
+      varlp->UDualremap2(pNode)[3] =
+          UDualremap1(pNode)[3] + BottomFluxMasse(pNode) - TopFluxMasse(pNode);
 
       if (options->projectionOrder >= 1) {
         // recherche de la vitesse du decentrement upwind
@@ -84,6 +84,12 @@ void Remap::computeDualUremap2() noexcept {
             UDualremap1(pNode)[1] +
             BottomFluxMasse(pNode) * BottomupwindVelocity(pNode)[1] -
             TopFluxMasse(pNode) * TopupwindVelocity(pNode)[1];
+	
+	// energie cinetique
+	varlp->UDualremap2(pNode)[2] =
+            UDualremap1(pNode)[2] +
+            BottomFluxMasse(pNode) * BottomupwindVelocity(pNode)[2] -
+            TopFluxMasse(pNode) * TopupwindVelocity(pNode)[2];
       }
     });
   } else {
@@ -112,8 +118,8 @@ void Remap::computeDualUremap2() noexcept {
       if (options->methode_flux_masse == 2)
         getRightAndLeftFluxMassePB2(nbmat, pNode);
 
-      varlp->UDualremap2(pNode)[2] =
-          UDualremap1(pNode)[2] + LeftFluxMasse(pNode) - RightFluxMasse(pNode);
+      varlp->UDualremap2(pNode)[3] =
+          UDualremap1(pNode)[3] + LeftFluxMasse(pNode) - RightFluxMasse(pNode);
 
       if (options->projectionOrder >= 1) {
         // recherche de la vitesse du decentrement upwind
@@ -136,6 +142,12 @@ void Remap::computeDualUremap2() noexcept {
             UDualremap1(pNode)[1] +
             LeftFluxMasse(pNode) * LeftupwindVelocity(pNode)[1] -
             RightFluxMasse(pNode) * RightupwindVelocity(pNode)[1];
+	
+	// energie cinetique
+	varlp->UDualremap2(pNode)[2] =
+            UDualremap1(pNode)[2] +
+            LeftFluxMasse(pNode) * LeftupwindVelocity(pNode)[2] -
+            RightFluxMasse(pNode) * RightupwindVelocity(pNode)[2];
       }
     });
   }

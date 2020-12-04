@@ -6,6 +6,7 @@ using namespace nablalib;
 
 // dimension du code
 static const int dim = 2;
+static const int dimplus1 = 3;
 // Nombre de matériaux maximum autorisé
 static const int nbmatmax = 3;
 // Nombre d'équation maximum autorisé

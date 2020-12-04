@@ -60,7 +60,11 @@ void Vnr::computeFaceQuantitesForRemap() noexcept {
                pNodesOfFaceF++) {
             int pId(nodesOfFaceF[pNodesOfFaceF]);
             int pNodes(pId);
-            reduction5 = reduction5 + (m_node_velocity_nplus1(pNodes));
+	    if (scheme->schema == scheme->CSTS) {
+	      reduction5 = reduction5 + .5 * (m_node_velocity_nplus1(pNodes) + m_node_velocity_n(pNodes));
+	    } else
+              reduction5 = reduction5 + (m_node_velocity_nplus1(pNodes)); // vitesse VNR en fait en N+1/2
+	      
           }
         }
 
@@ -216,25 +220,26 @@ void Vnr::computeVariablesForRemap() noexcept {
         m_node_mass(pNodes) * m_node_velocity_nplus1(pNodes)[0];
     varlp->UDualLagrange(pNodes)[1] =
         m_node_mass(pNodes) * m_node_velocity_nplus1(pNodes)[1];
-    // masse nodale
-    varlp->UDualLagrange(pNodes)[2] = m_node_mass(pNodes);
     // projection de l'energie cinétique
     if (options->projectionConservative == 1)
-      varlp->UDualLagrange(pNodes)[3] =
-          m_node_mass(pNodes) * (m_node_velocity_nplus1(pNodes)[0] *
-                                     m_node_velocity_nplus1(pNodes)[0] +
-                                 m_node_velocity_nplus1(pNodes)[1] *
-                                     m_node_velocity_nplus1(pNodes)[1]);
-
+      varlp->UDualLagrange(pNodes)[2] =
+          0.5 * m_node_mass(pNodes) * (m_node_velocity_nplus1(pNodes)[0] *
+				       m_node_velocity_nplus1(pNodes)[0] +
+				       m_node_velocity_nplus1(pNodes)[1] *
+				       m_node_velocity_nplus1(pNodes)[1]);
+    // masse nodale
+    varlp->UDualLagrange(pNodes)[3] = m_node_mass(pNodes);
+    
+    // *** variables Phi
     varlp->DualPhi(pNodes)[0] = m_node_velocity_nplus1(pNodes)[0];
     varlp->DualPhi(pNodes)[1] = m_node_velocity_nplus1(pNodes)[1];
-    // masse nodale
-    varlp->DualPhi(pNodes)[2] = m_node_mass(pNodes);
     // Phi energie cinétique
     if (options->projectionConservative == 1)
-      varlp->DualPhi(pNodes)[3] = (m_node_velocity_nplus1(pNodes)[0] *
+      varlp->DualPhi(pNodes)[2] = 0.5*(m_node_velocity_nplus1(pNodes)[0] *
                                        m_node_velocity_nplus1(pNodes)[0] +
-                                   m_node_velocity_nplus1(pNodes)[1] *
+				       m_node_velocity_nplus1(pNodes)[1] *
                                        m_node_velocity_nplus1(pNodes)[1]);
+    // masse nodale
+    varlp->DualPhi(pNodes)[3] = m_node_mass(pNodes);
   });
 }

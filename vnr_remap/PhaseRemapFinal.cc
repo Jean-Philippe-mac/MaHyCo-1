@@ -123,13 +123,6 @@ void Vnr::remapVariables() noexcept {
         m_pseudo_viscosity_nplus1(cCells) =
             varlp->Uremap2(cCells)[3 * nbmat + 3] / vol;
 
-        // conservation energie totale avec (density_nplus1 * vol) au lieu de
-        // masset idem double delta_ec(0.);
-        // if (options->projectionConservative == 1)
-        //  delta_ec = varlp->Uremap2(cCells)[3 * nbmat + 2] / masset -
-        //                     0.5 * (V_nplus1[0] * V_nplus1[0] + V_nplus1[1] *
-        //                     V_nplus1[1]);
-
         for (int imat = 0; imat < nbmat; imat++) {
           // densité
           m_density_env_nplus1(cCells)[imat] = density_env_nplus1[imat];
@@ -182,6 +175,7 @@ void Vnr::remapVariables() noexcept {
         if (m_internal_energy_nplus1(cCells) !=
                 m_internal_energy_nplus1(cCells) ||
             (m_density_nplus1(cCells) != m_density_nplus1(cCells))) {
+	  std::cout << "  " << std::endl;
           std::cout << " cell--Nan   " << cCells << std::endl;
           std::cout << " densites  " << density_env_nplus1[0] << " "
                     << density_env_nplus1[1] << " " << density_env_nplus1[0]
@@ -217,7 +211,7 @@ void Vnr::remapVariables() noexcept {
   // variables am_x_velocity noeuds
   Kokkos::parallel_for(nbNodes, KOKKOS_LAMBDA(const size_t& pNodes) {
     // Vitesse am_x_velocity noeuds
-    double massm_internal_energy_nodale_proj = varlp->UDualremap2(pNodes)[2];
+    double massm_internal_energy_nodale_proj = varlp->UDualremap2(pNodes)[3];
     if (massm_internal_energy_nodale_proj != 0.) {
       m_node_velocity_nplus1(pNodes)[0] =
           varlp->UDualremap2(pNodes)[0] / massm_internal_energy_nodale_proj;
@@ -227,16 +221,45 @@ void Vnr::remapVariables() noexcept {
       // pour les cas d'advection - on garde la vitesse
       m_node_velocity_nplus1(pNodes) = m_node_velocity_n(pNodes);
     }
-    // Energie cinétique a traite et conservation energie totale a faire
     // vitesses pour les sorties
     m_x_velocity(pNodes) = m_node_velocity_nplus1(pNodes)[0];
     m_y_velocity(pNodes) = m_node_velocity_nplus1(pNodes)[1];
   });
+  // conservation energie totale 
+  if (options->projectionConservative == 1) {
+    //  delta_ec = 0.25 (varlp->UDualremap2(cCells)[2] / varlp->UDualremap2(pNodes)[3] -
+    //                     0.5 * (V_nplus1[0] * V_nplus1[0] + V_nplus1[1] *
+    //                     V_nplus1[1]));
+    Kokkos::parallel_for(
+      "consercationET", nbCells, KOKKOS_LAMBDA(const int& cCells) {
+	const Id cId(cCells);
+	const auto nodesOfCellC(mesh->getNodesOfCell(cId));
+	const size_t nbNodesOfCellC(nodesOfCellC.size());
+	double delta_ec(0.);
+	double ec_proj(0.);
+	double ec_reconst(0.);
+	for (size_t pNodesOfCellC = 0; pNodesOfCellC < nbNodesOfCellC;
+	     pNodesOfCellC++) {
+	  const Id pId(nodesOfCellC[pNodesOfCellC]);
+	  const size_t pNodes(pId);
+	  if (varlp->UDualremap2(pNodes)[3]  != 0.) {
+	    ec_proj = varlp->UDualremap2(pNodes)[2] / varlp->UDualremap2(pNodes)[3];
+	    ec_reconst = 0.5 * (m_node_velocity_nplus1(pNodes)[0] * m_node_velocity_nplus1(pNodes)[0] +
+				m_node_velocity_nplus1(pNodes)[1] * m_node_velocity_nplus1(pNodes)[1]);
+	    delta_ec += 0.25 * ( ec_proj - ec_reconst);
+	  }
+	}
+	//delta_ec = max(0., delta_ec);
+	for (int imat = 0; imat < nbmat; imat++)
+	  m_internal_energy_env_nplus1(cCells)[imat] += m_mass_fraction_env(cCells)[imat] * delta_ec;
+	m_internal_energy_nplus1(cCells) += delta_ec;
+      });
+  } 
 }
 /**
  *******************************************************************************
- * \file computeVariablesGlobalesInit()
- * \brief Calcul de l'energie totale et la masse initiale du systeme
+ * \file computeVariablesGlobalesT()
+ * \brief Calcul de l'energie totale et la masse initiale du systeme apres projection
  *
  * \param  m_cell_velocity_nplus, m_density_nplus, m_euler_volume
  * \return m_total_energy_T, m_global_masse_T,
@@ -249,10 +272,20 @@ void Vnr::computeVariablesGlobalesT() noexcept {
   int nbmat = options->nbmat;
   Kokkos::parallel_for(
       "remapVariables", nbCells, KOKKOS_LAMBDA(const int& cCells) {
-        // m_total_energy_T(cCells) =
-        //    (density_nplus1 * vol) * m_internal_energy_nplus1(cCells) +
-        //    0.5 * (density_nplus1 * vol) * (V_nplus1[0] * V_nplus1[0] +
-        //    V_nplus1[1] * V_nplus1[1]);
+	const Id cId(cCells);
+	const auto nodesOfCellC(mesh->getNodesOfCell(cId));
+	const size_t nbNodesOfCellC(nodesOfCellC.size());
+	double ec_reconst(0.);
+	for (size_t pNodesOfCellC = 0; pNodesOfCellC < nbNodesOfCellC;
+	     pNodesOfCellC++) {
+	  const Id pId(nodesOfCellC[pNodesOfCellC]);
+	  const size_t pNodes(pId);
+	  ec_reconst += 0.25 * 0.5 *
+	    (m_node_velocity_nplus1(pNodes)[0] * m_node_velocity_nplus1(pNodes)[0] +
+	     m_node_velocity_nplus1(pNodes)[1] * m_node_velocity_nplus1(pNodes)[1]);
+	}
+        m_total_energy_T(cCells) = m_density_nplus1(cCells) * m_euler_volume(cCells) *
+	  (m_internal_energy_nplus1(cCells) + ec_reconst);
         m_total_masse_T(cCells) = 0.;
         for (int imat = 0; imat < nbmat; imat++)
           m_total_masse_T(cCells) += m_density_env_nplus1(cCells)[imat] *

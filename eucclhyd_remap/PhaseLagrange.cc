@@ -552,6 +552,8 @@ void Eucclhyd::computeFaceVelocity() noexcept {
             int pId(nodesOfFaceF[pNodesOfFaceF]);
             int pNodes(pId);
             reduction5 = reduction5 + (m_node_velocity_nplus1(pNodes));
+	    // normalement cela devrait etre
+	    // reduction5 = reduction5 + .5 * (m_node_velocity_nplus1(pNodes) + m_node_velocity_n(pNodes));
           }
         }
         varlp->faceNormalVelocity(fFaces) =

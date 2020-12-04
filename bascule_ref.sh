@@ -8,10 +8,10 @@ function main {
  echo "lancement"
  cat list_of_cases_to_change.txt
 for cas in $(cat list_of_cases_to_change.txt); do
-    local readonly cas_dir=${test_dir}/$cas  
+    local readonly cas_dir=${test_dir}/$cas
     echo CAS=$cas_dir
     if [[ -d ${cas_dir} ]]; then
-	echo CAS=$cas_dir
+	echo "lancement du $cas_dir"
         echo $curent_dir
 	echo $test_dir/$cas
 	cp $cas_dir/donnees.txt .

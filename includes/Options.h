@@ -1,6 +1,10 @@
 #ifndef OPTIONSSCHEMA_H
 #define OPTIONSSCHEMA_H
 
+#include <iostream>
+using namespace std;
+#include<string>
+
 namespace optionschemalib {
 
 class OptionsSchema {
@@ -19,6 +23,7 @@ class OptionsSchema {
     int pseudo_centree = 1;
     int methode_flux_masse = 0;
     int sansLagrange = 0;
+    string fichier_sortie1D;
   };
   Options* options;
 

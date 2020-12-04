@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
     delete init;
     delete part;
   
-  } else if (scheme->schema == scheme->VNR) {
+  } else if (scheme->schema == scheme->VNR || scheme->schema == scheme->CSTS) {
     // variables de projection 
     auto varlp = new variableslagremaplib::VariablesLagRemap(nm);
     // variables et fonctions de l'initialisation
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
     // fonctions de la projection 
     auto proj = new Remap(o, cstmesh, gt, cl, lim, nm, varlp);
     // 
-    auto c = new Vnr(o, cstmesh, gt, test, cl, lim, part, eos, nm, varlp, proj, init, so, output);
+    auto c = new Vnr(scheme, o, cstmesh, gt, test, cl, lim, part, eos, nm, varlp, proj, init, so, output);
     c->simulate();
     delete varlp;
     delete init;

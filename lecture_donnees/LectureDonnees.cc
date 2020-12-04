@@ -114,6 +114,7 @@ void LectureDonneesClass::LectureDonnees(
         mesdonnees >> valeur;
         cstmesh->cylindrical_mesh = ouiOUnon[valeur];
         std::cout << "Utilisation d'un maille cylindrique" << std::endl;
+        mesdonnees.ignore();
       }
 
       else if (!strcmp(motcle, "R_MIN")) {

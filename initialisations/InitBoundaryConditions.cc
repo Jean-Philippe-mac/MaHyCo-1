@@ -92,6 +92,17 @@ void Initialisations::initBoundaryConditions() noexcept {
     cdl->bottomBC = cdl->symmetry;
     cdl->bottomBCValue = ex;
 
+    if (cstmesh->cylindrical_mesh) {
+      cdl->leftBC = cdl->imposedVelocity;
+      cdl->leftBCValue = zeroVect;
+      cdl->rightBC = cdl->imposedVelocity;
+      cdl->rightBCValue = zeroVect;
+      cdl->bottomBC = cdl->symmetry;
+      cdl->bottomBCValue = ex;
+      cdl->topBC =  cdl->symmetry;
+      cdl->topBCValue = ey;
+    }
+    
   } else if (test->Nom == test->TriplePoint ||
              test->Nom == test->BiTriplePoint) {
     // maillage 140 60 0.0005 0.0005

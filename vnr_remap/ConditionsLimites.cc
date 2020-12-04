@@ -40,7 +40,7 @@ void Vnr::updateNodeBoundaryConditions() noexcept {
               reduction1,
               (m_pressure_n(cCells) + m_pseudo_viscosity_n(cCells)) *
                   (m_cqs_n(cCells, pNodesOfCellC) +
-                   symmetricVector(m_cqs_n(cCells, pNodesOfCellC), {1.0, 0.0})));
+                   symmetricVector(m_cqs_n(cCells, pNodesOfCellC), cdl->bottomBCValue)));
         }
       }
       m_node_velocity_nplus1(pNodes) =
@@ -70,7 +70,7 @@ void Vnr::updateNodeBoundaryConditions() noexcept {
               reduction2,
               (m_pressure_n(cCells) + m_pseudo_viscosity_n(cCells)) *
                   (m_cqs_n(cCells, pNodesOfCellC) +
-                   symmetricVector(m_cqs_n(cCells, pNodesOfCellC), {1.0, 0.0})));
+                   symmetricVector(m_cqs_n(cCells, pNodesOfCellC), cdl->topBCValue)));
         }
       }
       m_node_velocity_nplus1(pNodes) =
@@ -99,7 +99,7 @@ void Vnr::updateNodeBoundaryConditions() noexcept {
               reduction3,
               (m_pressure_n(cCells) + m_pseudo_viscosity_n(cCells)) *
                   (m_cqs_n(cCells, pNodesOfCellC) +
-                   symmetricVector(m_cqs_n(cCells, pNodesOfCellC), {0.0, 1.0})));
+                   symmetricVector(m_cqs_n(cCells, pNodesOfCellC), cdl->leftBCValue)));
         }
       }
       m_node_velocity_nplus1(pNodes) =
@@ -128,7 +128,7 @@ void Vnr::updateNodeBoundaryConditions() noexcept {
               reduction4,
               (m_pressure_n(cCells) + m_pseudo_viscosity_n(cCells)) *
                   (m_cqs_n(cCells, pNodesOfCellC) +
-                   symmetricVector(m_cqs_n(cCells, pNodesOfCellC), {0.0, 1.0})));
+                   symmetricVector(m_cqs_n(cCells, pNodesOfCellC), cdl->rightBCValue)));
         }
       }
       m_node_velocity_nplus1(pNodes) =

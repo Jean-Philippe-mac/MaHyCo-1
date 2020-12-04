@@ -267,11 +267,11 @@ void Vnr::executeTimeLoopN() noexcept {
       // Calcul des corrections CSTS d'energie interne
       if (scheme->schema == scheme->CSTS) {
 	// Calcul de l'energie interne
-	updateEnergycqs();
+	updateEnergycsts(); // pdv utilisant les cqs
 	updateEnergyForTotalEnergyConservation();
       } else {
 	// Calcul de l'energie interne
-	updateEnergy();
+	updateEnergy(); // Pdv n'utilisant pas les cqs
       }	
       // Appel aux differentes équations d'état : m_pressure_env_nplus1
       computeEOS();
@@ -377,7 +377,7 @@ void Vnr::executeTimeLoopN() noexcept {
     // 	    fichierE  << std::endl;
     // 	}
 											   
-    // std::cout << " DT  = " << gt->deltat_nplus1 << std::endl;
+    std::cout << " DT  = " << gt->deltat_nplus1 << std::endl;
     cpu_timer.stop();
     global_timer.stop();
 

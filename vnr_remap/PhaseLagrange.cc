@@ -369,7 +369,7 @@ void Vnr::updatePosition() noexcept {
     m_node_coord_nplus1(pNodes) =
         m_node_coord_n(pNodes) +
         gt->deltat_nplus1 * m_node_velocity_nplus1(pNodes);
-    // on en profite pour calculer les sorties 
+    // on en profite pour mettre a jour les sorties 
     m_x_velocity(pNodes) = m_node_velocity_nplus1(pNodes)[0];
     m_y_velocity(pNodes) = m_node_velocity_nplus1(pNodes)[1];
   });
@@ -569,33 +569,20 @@ void Vnr::updateEnergy() noexcept {
  *
  * \param  m_density_env_nplus1, m_density_env_n,
  *         m_pseudo_viscosity_env_nplus1, m_pseudo_viscosity_env_n
+ *         m_cqs_nplus1, m_cqs_n
+ *         m_node_velocity_nplus1, m_node_velocity_n
+ *         gt->deltat_nplus1, m_cell_mass_env
  *         m_pressure_env_n, m_mass_fraction_env
  *
  * \return m_internal_energy_env_nplus1, m_internal_energy_nplus1
  *******************************************************************************
  */
-void Vnr::updateEnergycqs() noexcept {
+void Vnr::updateEnergycsts() noexcept {
   Kokkos::parallel_for(nbCells, KOKKOS_LAMBDA(const size_t& cCells) {
     m_internal_energy_nplus1(cCells) = 0.;
     for (int imat = 0; imat < options->nbmat; ++imat) {
       m_internal_energy_env_nplus1(cCells)[imat] = 0.;
       if (m_density_env_nplus1(cCells)[imat] > options->threshold) {
-        // calcul du DV a changer utiliser divU
-        double pseudo(0.);
-        if ((options->pseudo_centree == 1) &&
-            ((m_pseudo_viscosity_env_nplus1(cCells)[imat] +
-              m_pseudo_viscosity_env_n(cCells)[imat]) *
-                 (1.0 / m_density_env_nplus1(cCells)[imat] -
-                  1.0 / m_density_env_n(cCells)[imat]) >
-             0.)) {
-          pseudo = 0.5 * (m_pseudo_viscosity_env_nplus1(cCells)[imat] +
-                          m_pseudo_viscosity_env_n(cCells)[imat]);
-        }
-        if (options->pseudo_centree == 0) {
-	  // test sur la positivité du travail dans le calcul de
-	  // m_pseudo_viscosity_nplus1(cCells)
-          pseudo = m_pseudo_viscosity_env_nplus1(cCells)[imat];
-        }
 	const Id cId(cCells);
 	const auto nodesOfCellC(mesh->getNodesOfCell(cId));
 	const size_t nbNodesOfCellC(nodesOfCellC.size());
@@ -669,7 +656,6 @@ void Vnr::updateEnergyForTotalEnergyConservation() noexcept {
 	      * dot(m_cqs_n(cCells, pNodesOfCellC), m_node_velocity_n(pNodes))
 	      * gt->deltat_n;	  
 	  }
-	  //if (correction > 1.e-16) std::cout << cCells << " correction " << correction << std::endl;
 	  m_internal_energy_env_nplus1(cCells)[imat] += correction;
 	  m_internal_energy_nplus1(cCells) +=
 	    m_mass_fraction_env(cCells)[imat] *

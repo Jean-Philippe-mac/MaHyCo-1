@@ -128,6 +128,7 @@ class Vnr {
   Kokkos::View<double*> m_internal_energy_nplus1;
   Kokkos::View<RealArray1D<nbmatmax>*> m_internal_energy_env_n;
   Kokkos::View<RealArray1D<nbmatmax>*> m_internal_energy_env_nplus1;
+  Kokkos::View<RealArray1D<nbmatmax>*> m_dpde_env;
   // vitesse aux noeuds
   Kokkos::View<RealArray1D<dim>*> m_node_velocity_n;
   Kokkos::View<RealArray1D<dim>*> m_node_velocity_nplus1;
@@ -271,6 +272,7 @@ class Vnr {
         m_internal_energy_nplus1("internal_energy_nplus1", nbCells),
         m_internal_energy_env_n("internal_energy_env_n", nbCells),
         m_internal_energy_env_nplus1("internal_energy_env_nplus1", nbCells),
+        m_dpde_env("dpde_env", nbCells),
         m_node_velocity_n("node_velocity_n", nbNodes),
         m_node_velocity_nplus1("node_velocity_nplus1", nbNodes),
         m_x_velocity("x_velocity", nbNodes),
@@ -353,7 +355,9 @@ class Vnr {
   void computeTau() noexcept;
 
   void updateEnergy() noexcept;
+  void updateEnergyite() noexcept;
   void updateEnergycsts() noexcept;
+  void updateEnergycstsite() noexcept;
   void updateEnergyForTotalEnergyConservation() noexcept;
   
   void computeDivU() noexcept;

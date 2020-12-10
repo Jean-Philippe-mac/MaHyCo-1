@@ -267,11 +267,13 @@ void Vnr::executeTimeLoopN() noexcept {
       // Calcul des corrections CSTS d'energie interne
       if (scheme->schema == scheme->CSTS) {
 	// Calcul de l'energie interne
-	updateEnergycsts(); // pdv utilisant les cqs
+	// updateEnergycsts(); // version GP et Pdv utilisant les cqs
+	updateEnergycstsite(); //  version iterative et Pdv utilisant les cqs
 	updateEnergyForTotalEnergyConservation();
       } else {
 	// Calcul de l'energie interne
-	updateEnergy(); // Pdv n'utilisant pas les cqs
+	// updateEnergy(); // version GP et Pdv n'utilisant pas les cqs
+	updateEnergyite(); // version iterative et Pdv n'utilisant pas les cqs
       }	
       // Appel aux differentes équations d'état : m_pressure_env_nplus1
       computeEOS();

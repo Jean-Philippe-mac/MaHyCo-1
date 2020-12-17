@@ -238,6 +238,14 @@ void Remap::getTopAndBottomFluxMasse2(const int nbmat, const size_t pNodes) {
     BottomFluxMasse(pNodes) += BottomFluxMassePartielle(pNodes)[imat];
   }
 }
+/**
+ *******************************************************************************
+ * \file getBottomUpwindVelocity
+ * \brief calcul de la vitesse upwind pour le flux en bas
+ * \param  varlp->DualPhi, varlp->XLagrange, gt->deltat_n
+ * \return BottomupwindVelocity[0,1,2]
+ *******************************************************************************
+ */
 void Remap::getBottomUpwindVelocity(const size_t BottomNode, const size_t pNode,
                                     RealArray1D<nbequamax> gradDualPhimoins,
                                     RealArray1D<nbequamax> gradDualPhi0) {
@@ -293,6 +301,14 @@ void Remap::getBottomUpwindVelocity(const size_t BottomNode, const size_t pNode,
                    gt->deltat_n * ubottom));
   }
 }
+/**
+ *******************************************************************************
+ * \file getTopUpwindVelocity
+ * \brief calcul de la vitesse upwind pour le flux du haut
+ * \param  varlp->DualPhi, varlp->XLagrange, gt->deltat_n
+ * \return TopupwindVelocity[0,1,2]
+ *******************************************************************************
+ */
 void Remap::getTopUpwindVelocity(const size_t TopNode, const size_t pNode,
                                  RealArray1D<nbequamax> gradDualPhiplus,
                                  RealArray1D<nbequamax> gradDualPhi0) {
@@ -348,7 +364,14 @@ void Remap::getTopUpwindVelocity(const size_t TopNode, const size_t pNode,
     
   }
 }
-
+/**
+ *******************************************************************************
+ * \file getRightUpwindVelocity
+ * \brief calcul de la vitesse upwind pour le flux de droite
+ * \param  varlp->DualPhi, varlp->XLagrange, gt->deltat_n
+ * \return RightupwindVelocity[0,1,2]
+ *******************************************************************************
+ */
 void Remap::getRightUpwindVelocity(const size_t RightNode, const size_t pNode,
                                    RealArray1D<nbequamax> gradDualPhiplus,
                                    RealArray1D<nbequamax> gradDualPhi0) {
@@ -406,6 +429,14 @@ void Remap::getRightUpwindVelocity(const size_t RightNode, const size_t pNode,
 		 gt->deltat_n * uright));
   }
 }
+/**
+ *******************************************************************************
+ * \file getLeftUpwindVelocity
+ * \brief calcul de la vitesse upwind pour le flux de gauche
+ * \param  varlp->DualPhi, varlp->XLagrange, gt->deltat_n
+ * \return LeftupwindVelocity[0,1,2]
+ *******************************************************************************
+ */
 void Remap::getLeftUpwindVelocity(const size_t LeftNode, const size_t pNode,
                                   RealArray1D<nbequamax> gradDualPhimoins,
                                   RealArray1D<nbequamax> gradDualPhi0) {
@@ -460,9 +491,18 @@ void Remap::getLeftUpwindVelocity(const size_t LeftNode, const size_t pNode,
                    gt->deltat_n * uleft));
   }
 }
-// *********************************************
-// Méthode A2
-// *********************************************
+/**
+ *******************************************************************************
+ * \file getRightAndLeftFluxViaVol1
+ * \brief calcul des flux de masse sur les faces virtuelles
+ *       gauche et droite de la maille duale
+ *       pour l'etape 1 de la projection
+ *  Méthode A2
+ *
+ * \param  FluxFace1 (flux de masse aux mailles)
+ * \return RightFluxMasse, LeftFluxMasse
+ *******************************************************************************
+ */
 void Remap::getRightAndLeftFluxMasseViaVol1(const int nbmat,
                                             const size_t pNodes) {
   // construction des mailles et faces associées pour recuperer les
@@ -532,6 +572,18 @@ void Remap::getRightAndLeftFluxMasseViaVol1(const int nbmat,
     LeftFluxMasse(pNodes) += LeftFluxMassePartielle(pNodes)[imat];
   }
 }
+/**
+ *******************************************************************************
+ * \file getRightAndLeftFluxViaVol2
+ * \brief calcul des flux de masse sur les faces virtuelles
+ *       gauche et droite de la maille duale
+ *       pour l'etape 2 de la projection
+ *  Méthode A2
+ *
+ * \param  FluxFace1 (flux de masse aux mailles)
+ * \return RightFluxMasse, LeftFluxMasse
+ *******************************************************************************
+ */
 void Remap::getRightAndLeftFluxMasseViaVol2(const int nbmat,
                                             const size_t pNodes) {
   // construction des mailles et faces associées pour recuperer les
@@ -601,7 +653,18 @@ void Remap::getRightAndLeftFluxMasseViaVol2(const int nbmat,
     LeftFluxMasse(pNodes) += LeftFluxMassePartielle(pNodes)[imat];
   }
 }
-
+/**
+ *******************************************************************************
+ * \file getTopAndBottomFluxMasseViaVol1
+ * \brief calcul des flux de masse sur les faces virtuelles
+ *       haute et basse de la maille duale
+ *       pour l'etape 1 de la projection
+ *  Méthode A2
+ *
+ * \param  FluxFace1 (flux de masse aux mailles)
+ * \return TopFluxMasse, BottomFluxMasse
+ *******************************************************************************
+ */
 void Remap::getTopAndBottomFluxMasseViaVol1(const int nbmat,
                                             const size_t pNodes) {
   // construction des mailles et faces associées pour recuperer les
@@ -655,6 +718,18 @@ void Remap::getTopAndBottomFluxMasseViaVol1(const int nbmat,
     BottomFluxMasse(pNodes) += BottomFluxMassePartielle(pNodes)[imat];
   }
 }
+/**
+ *******************************************************************************
+ * \file getTopAndBottomFluxMasseViaVol2
+ * \brief calcul des flux de masse sur les faces virtuelles
+ *       haute et basse de la maille duale
+ *       pour l'etape 2 de la projection
+ *  Méthode A2
+ *
+ * \param  FluxFace2 (flux de masse aux mailles)
+ * \return TopFluxMasse, BottomFluxMasse
+ *******************************************************************************
+ */
 void Remap::getTopAndBottomFluxMasseViaVol2(const int nbmat,
                                             const size_t pNodes) {
   // construction des mailles et faces associées pour recuperer les
@@ -707,9 +782,18 @@ void Remap::getTopAndBottomFluxMasseViaVol2(const int nbmat,
     BottomFluxMasse(pNodes) += BottomFluxMassePartielle(pNodes)[imat];
   }
 }
-// *********************************************
-// Méthode PB
-// *********************************************
+/**
+ *******************************************************************************
+ * \file getRightAndLeftFluxMassePB1
+ * \brief calcul des flux de masse sur les faces virtuelles
+ *       gauche et droite de la maille duale
+ *       pour l'etape 1 de la projection
+ *  Méthode Pente Borne
+ *
+ * \param  FluxFace1 (flux de masse aux mailles)
+ * \return RightFluxMasse, LeftFluxMasse
+ *******************************************************************************
+ */
 void Remap::getRightAndLeftFluxMassePB1(const int nbmat, const size_t pNodes) {
   // construction des mailles et faces associées pour recuperer les
   // flux de masses aux faces à gauche et à droite
@@ -767,6 +851,18 @@ void Remap::getRightAndLeftFluxMassePB1(const int nbmat, const size_t pNodes) {
     // }
   }
 }
+/**
+ *******************************************************************************
+ * \file getRightAndLeftFluxMassePB2
+ * \brief calcul des flux de masse sur les faces virtuelles
+ *       gauche et droite de la maille duale
+ *       pour l'etape 2 de la projection
+ *  Méthode Pente Borne
+ *
+ * \param  FluxFace2 (flux de masse aux mailles)
+ * \return RightFluxMasse, LeftFluxMasse
+ *******************************************************************************
+ */
 void Remap::getRightAndLeftFluxMassePB2(const int nbmat, const size_t pNodes) {
   // construction des mailles et faces associées pour recuperer les
   // flux de masses aux faces à gauche et à droite
@@ -822,7 +918,18 @@ void Remap::getRightAndLeftFluxMassePB2(const int nbmat, const size_t pNodes) {
     LeftFluxMasse(pNodes) += LeftFluxMassePartielle(pNodes)[imat];
   }
 }
-
+/**
+ *******************************************************************************
+ * \file getTopAndBottomFluxMassePB1
+ * \brief calcul des flux de masse sur les faces virtuelles
+ *       haute et basse de la maille duale
+ *       pour l'etape 2 de la projection
+ *  Méthode Pente Borne
+ *
+ * \param  FluxFace2 (flux de masse aux mailles)
+ * \return TopFluxMasse, BottomFluxMasse
+ *******************************************************************************
+ */
 void Remap::getTopAndBottomFluxMassePB1(const int nbmat, const size_t pNodes) {
   // construction des mailles et faces associées pour recuperer les
   // flux de masses aux faces dessus et dessous

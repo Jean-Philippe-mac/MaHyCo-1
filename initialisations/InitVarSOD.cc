@@ -98,21 +98,19 @@ void Initialisations::initVarBiSOD() noexcept {
     m_internal_energy_env_n0(cCells)[0] = eInit1;
     m_internal_energy_env_n0(cCells)[1] = eInit2;
 
-    // ce qui suit en commentaire est plus propre mais cree des diff avec la
-    // reference a basculer plus tard
-    // if (f1 > 0.)
-    m_speed_velocity_env_n0(cCells)[0] =
+    if (f1 > 0.)
+      m_speed_velocity_env_n0(cCells)[0] =
         std::sqrt(eos->gamma[0] * m_density_env_n0(cCells)[0] /
                   m_pressure_env_n0(cCells)[0]);
-    // else
-    // m_speed_velocity_env_n0(cCells)[0] = 1.e20; // pour avoir le min sur 2
+    else
+      m_speed_velocity_env_n0(cCells)[0] = 1.e20; // pour avoir le min sur 2
 
-    // if (f2 > 0.)
-    m_speed_velocity_env_n0(cCells)[1] =
+    if (f2 > 0.)
+      m_speed_velocity_env_n0(cCells)[1] =
         std::sqrt(eos->gamma[1] * m_density_env_n0(cCells)[1] /
                   m_pressure_env_n0(cCells)[1]);
-    // else
-    // m_speed_velocity_env_n0(cCells)[1] = 1.e20; // pour avoir le min sur 1
+    else
+      m_speed_velocity_env_n0(cCells)[1] = 1.e20; // pour avoir le min sur 1
 
     m_speed_velocity_n0(cCells) = min(m_speed_velocity_env_n0(cCells)[0],
                                       m_speed_velocity_env_n0(cCells)[1]);

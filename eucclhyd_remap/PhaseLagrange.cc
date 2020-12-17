@@ -74,21 +74,12 @@ void Eucclhyd::computeEOS() {
       double gamma = eos->gamma[imat];
       double tension_limit = eos->tension_limit[imat];
       double sound_speed;  // = m_speed_velocity_env_nplus1(cCells)[imat];
-      RealArray1D<2> sortie_eos;  // pression puis sound_speed
-      if (eos->Nom[imat] == eos->PerfectGas)
-        sortie_eos = eos->computeEOSGP(gamma, density, energy);
-      if (eos->Nom[imat] == eos->Void)
-        sortie_eos = eos->computeEOSVoid(density, energy);
-      if (eos->Nom[imat] == eos->StiffenedGas)
-        sortie_eos =
-            eos->computeEOSSTIFG(gamma, tension_limit, density, energy);
-      if (eos->Nom[imat] == eos->Fictif)
-        sortie_eos = eos->computeEOSFictif(gamma, density, energy);
-      if (eos->Nom[imat] == eos->SolidLinear)
-        sortie_eos = eos->computeEOSSL(density, energy);
-
+      RealArray1D<3> sortie_eos;  // pression puis sound_speed puis dpde
+      //
+      sortie_eos = eos->computeEOS(eos->Nom[imat], gamma, tension_limit, density, energy);
       m_pressure_env(cCells)[imat] = sortie_eos[0];
       m_speed_velocity_env(cCells)[imat] = sortie_eos[1];
+      m_dpde_env(cCells)[imat] = sortie_eos[2];
     }
   });
 }

@@ -73,47 +73,50 @@ void Vnr::computeArtificialViscosity() noexcept {
                           reducer);
   Kokkos::parallel_for(nbCells, KOKKOS_LAMBDA(const size_t& cCells) {
     const Id cId(cCells);
-    if (m_divu_n(cCells) < 0.0) {
+    if (m_divu_nplus1(cCells) < 0.0) {
       double reduction0(0.0);
-      {
-        const auto nodesOfCellC(mesh->getNodesOfCell(cId));
-        const size_t nbNodesOfCellC(nodesOfCellC.size());
-        for (size_t pNodesOfCellC = 0; pNodesOfCellC < nbNodesOfCellC;
-             pNodesOfCellC++) {
-          reduction0 =
-              sumR0(reduction0, m_node_cellvolume_n(cCells, pNodesOfCellC));
-        }
+      const auto nodesOfCellC(mesh->getNodesOfCell(cId));
+      const size_t nbNodesOfCellC(nodesOfCellC.size());
+      for (size_t pNodesOfCellC = 0; pNodesOfCellC < nbNodesOfCellC;
+	   pNodesOfCellC++) {
+	reduction0 =
+	  sumR0(reduction0, m_node_cellvolume_nplus1(cCells, pNodesOfCellC));
       }
-      double gamma(
-          eos->gamma[0]);  // a changer en prenant une moyenne des gamma ?
+      // a changer en prenant une moyenne des gamma ?
+      double gamma(eos->gamma[0]);  
       m_pseudo_viscosity_nplus1(cCells) =
           1.0 / m_tau_density_nplus1(cCells) *
           (-0.5 * std::sqrt(reduction0) * m_speed_velocity_n(cCells) *
                m_divu_nplus1(cCells) +
            (gamma + 1) / 2.0 * reduction0 * m_divu_nplus1(cCells) *
-               m_divu_nplus1(cCells));
-    } else
+	   m_divu_nplus1(cCells));
+      
+    } else {
       m_pseudo_viscosity_nplus1(cCells) = 0.0;
+    }
     //
     // limitation par la pression
     // permet de limiter un exces de pseudo lié à des erreurs d'arrondis sur
     // m_tau_density_nplus1
-    if (m_pseudo_viscosity_nplus1(cCells) > reductionP) {
+    //if (m_pseudo_viscosity_nplus1(cCells) > reductionP) {
       //std::cout << cCells << " pseudo " << m_pseudo_viscosity_nplus1(cCells)
       //          << " pression " << m_pressure_n(cCells) << std::endl;
-      m_pseudo_viscosity_nplus1(cCells) = reductionP;
-    }
+      //m_pseudo_viscosity_nplus1(cCells) = reductionP;
+      //}
     // pour chaque matériau
     for (int imat = 0; imat < options->nbmat; ++imat)
       m_pseudo_viscosity_env_nplus1(cCells)[imat] =
           m_fracvol_env(cCells)[imat] * m_pseudo_viscosity_nplus1(cCells);
-    if (m_pseudo_viscosity_nplus1(cCells) != m_pseudo_viscosity_nplus1(cCells)) {
-    for (int imat = 0; imat < options->nbmat; ++imat)
-       std::cout << "\n " << cCells
-	    << " pseudo " << m_pseudo_viscosity_env_nplus1(cCells)[imat]
-	    << " pression " << m_pressure_env_n(cCells)[imat]
-	    << " energie  " << m_internal_energy_env_n(cCells)[imat]
-	    << std::endl;
+    //
+    if (m_pseudo_viscosity_nplus1(cCells) < 0.) {
+      for (int imat = 0; imat < options->nbmat; ++imat)
+	std::cout << "\n Pb pseudo " << cCells
+		  << " pseudo env " << m_pseudo_viscosity_env_nplus1(cCells)[imat]
+		  << " pseudo " << m_pseudo_viscosity_nplus1(cCells)
+		  << " pression " << m_pressure_env_n(cCells)[imat]
+		  << " energie  " << m_internal_energy_env_n(cCells)[imat]
+		  << std::endl;
+      exit(1);
     }
       
   });
@@ -536,14 +539,20 @@ void Vnr::updateEnergy() noexcept {
             ((m_pseudo_viscosity_env_nplus1(cCells)[imat] +
               m_pseudo_viscosity_env_n(cCells)[imat]) *
                  (1.0 / m_density_env_nplus1(cCells)[imat] -
-                  1.0 / m_density_env_n(cCells)[imat]) >
+                  1.0 / m_density_env_n(cCells)[imat]) <
              0.)) {
           pseudo = 0.5 * (m_pseudo_viscosity_env_nplus1(cCells)[imat] +
                           m_pseudo_viscosity_env_n(cCells)[imat]);
         }
-        if (options->pseudo_centree ==
-            0) {  // test sur la positivité du travail dans le calcul de
-                  // m_pseudo_viscosity_nplus1(cCells)
+        if (options->pseudo_centree == 0
+	    &&
+            ((m_pseudo_viscosity_env_nplus1(cCells)[imat]) *
+                 (1.0 / m_density_env_nplus1(cCells)[imat] -
+                  1.0 / m_density_env_n(cCells)[imat]) <
+             0.)
+	    ) {
+	  // test sur la positivité du travail dans le calcul de
+	  // m_pseudo_viscosity_nplus1(cCells)
           pseudo = m_pseudo_viscosity_env_nplus1(cCells)[imat];
         }
         const double den(1 + 0.5 * (eos->gamma[imat] - 1.0) *
@@ -561,7 +570,104 @@ void Vnr::updateEnergy() noexcept {
       }
     }
   });
-}/**
+}
+/**
+ *******************************************************************************
+ * \file updateEnergyite()
+ * \brief Calcul de l'energie interne version iterative
+ *
+ * \param  m_density_env_nplus1, m_density_env_n,
+ *         m_pseudo_viscosity_env_nplus1, m_pseudo_viscosity_env_n
+ *         m_pressure_env_n, m_mass_fraction_env
+ * Utilsation d'un newton sur l'energie_interne
+ *
+ * \return m_internal_energy_env_nplus1, m_internal_energy_nplus1
+ *******************************************************************************
+ */
+/** */
+/* la fonction dont on cherche un zero */
+/** */
+inline double fvnr(double e, double p, double dpde,
+		double en, double qnn1, double pn, double rn1,
+		double rn) 
+{return e-en+0.5*(p+pn+2.*qnn1)*(1./rn1-1./rn);};
+
+/** */
+/* la derivee de f */
+/** */
+inline double fvnrderiv(double e, double p, double dpde, double rn1, double rn)
+{return 1.+0.5*dpde*(1./rn1-1./rn);};
+/*
+ *******************************************************************************
+*/
+void Vnr::updateEnergyite() noexcept {
+  Kokkos::parallel_for(nbCells, KOKKOS_LAMBDA(const size_t& cCells) {
+    RealArray1D<3> sortie_eos;  // pression puis sound_speed
+    m_internal_energy_nplus1(cCells) = 0.;
+    for (int imat = 0; imat < options->nbmat; ++imat) {
+      m_internal_energy_env_nplus1(cCells)[imat] = 0.;
+      if ((m_density_env_nplus1(cCells)[imat] > options->threshold) &&
+          (m_density_env_n(cCells)[imat] > options->threshold)) {
+        // calcul du DV a changer utiliser divU
+        double pseudo(0.);
+        if ((options->pseudo_centree == 1)
+	    &&
+            ((m_pseudo_viscosity_env_nplus1(cCells)[imat] +
+              m_pseudo_viscosity_env_n(cCells)[imat]) *
+                 (1.0 / m_density_env_nplus1(cCells)[imat] -
+                  1.0 / m_density_env_n(cCells)[imat]) <
+             0.)
+	    ) {
+          pseudo = 0.5 * (m_pseudo_viscosity_env_nplus1(cCells)[imat] +
+                          m_pseudo_viscosity_env_n(cCells)[imat]);
+        }
+        if (options->pseudo_centree == 0
+	    &&
+            ((m_pseudo_viscosity_env_nplus1(cCells)[imat]) *
+                 (1.0 / m_density_env_nplus1(cCells)[imat] -
+                  1.0 / m_density_env_n(cCells)[imat]) <
+             0.)
+	    ) {
+	 
+	  // test sur la positivité du travail dans le calcul de
+	  // m_pseudo_viscosity_nplus1(cCells)
+          pseudo = m_pseudo_viscosity_env_nplus1(cCells)[imat];
+        }
+	double rn  = m_density_env_n(cCells)[imat];
+	double pn  = m_pressure_env_n(cCells)[imat];
+	double qnn1 = pseudo;
+	double m   = m_cell_mass_env(cCells)[imat];
+	double rn1 = m_density_env_nplus1(cCells)[imat];
+	double en  = m_internal_energy_env_n(cCells)[imat];
+	double g = eos->gamma[imat];
+        double t = eos->tension_limit[imat];
+
+	// les iterations de newton
+	double epsilon = options->threshold;
+	double itermax = 50;
+	double enew=0, e=en, p, c, dpde;
+	int i = 0;
+	while(i<itermax && abs(fvnr(e, p, dpde, en, qnn1, pn, rn1, rn))>=epsilon)
+	  {
+	    sortie_eos = eos->computeEOS(eos->Nom[imat], g, t, rn1, e);
+	    p = sortie_eos[0];
+	    c = sortie_eos[1];
+	    dpde = sortie_eos[2];
+	    enew = e - fvnr(e, p, dpde, en, qnn1, pn, rn1, rn) / fvnrderiv(e, p, dpde, rn1, rn);
+	    e = enew;
+	    i++;
+	  }
+	m_internal_energy_env_nplus1(cCells)[imat] = e;
+	m_speed_velocity_env_nplus1(cCells)[imat] = c;
+	m_pressure_env_nplus1(cCells)[imat] = p;
+        m_internal_energy_nplus1(cCells) +=
+            m_mass_fraction_env(cCells)[imat] *
+            m_internal_energy_env_nplus1(cCells)[imat];
+      }
+    }
+    });
+}
+/**
  *******************************************************************************
  * \file updateEnergycqs()
  * \brief Calcul de l'energie interne (seul le cas du gaz parfait est codé)
@@ -617,6 +723,96 @@ void Vnr::updateEnergycsts() noexcept {
       }
     }
   });
+}
+/**
+ *******************************************************************************
+ * \file updateEnergycqsite()
+ * \brief Calcul de l'energie interne avec cqs, resolution iterative
+ *
+ * \param  m_density_env_nplus1, m_density_env_n,
+ *         m_pseudo_viscosity_env_nplus1, m_pseudo_viscosity_env_n
+ *         m_cqs_nplus1, m_cqs_n
+ *         m_node_velocity_nplus1, m_node_velocity_n
+ *         gt->deltat_nplus1, m_cell_mass_env
+ *         m_pressure_env_n, m_mass_fraction_env
+ * Utilsation d'un newton sur l'energie_interne
+ *
+ * \return m_internal_energy_env_nplus1, m_internal_energy_nplus1
+ *******************************************************************************
+ */
+/** */
+/* la fonction dont on cherche le zero */
+/** */
+inline double f(double e, double p,double dpde,
+		double en,double qn, double pn, double cn1,
+		double cn, double m, double qn1) 
+{return e-en+0.5*(p+qn1)*cn1/m +0.5*(pn+qn)*cn/m;};
+/** */
+/* la derivee de f */
+/** */
+inline double fderiv(double e, double p, double dpde, double cn1, double m)
+{return 1.+0.5*dpde*cn1/m;};
+/*
+ *******************************************************************************
+*/
+void Vnr::updateEnergycstsite() noexcept {
+  Kokkos::parallel_for(nbCells, KOKKOS_LAMBDA(const size_t& cCells) {
+    RealArray1D<3> sortie_eos;  // pression puis sound_speed
+    m_internal_energy_nplus1(cCells) = 0.;
+    for (int imat = 0; imat < options->nbmat; ++imat) {
+      m_internal_energy_env_nplus1(cCells)[imat] = 0.;
+      if (m_density_env_nplus1(cCells)[imat] > options->threshold) {
+	const Id cId(cCells);
+	const auto nodesOfCellC(mesh->getNodesOfCell(cId));
+	const size_t nbNodesOfCellC(nodesOfCellC.size());
+	double cqs_v_nplus1(0.);
+	double cqs_v_n(0.);
+	for (size_t pNodesOfCellC = 0; pNodesOfCellC < nbNodesOfCellC;
+	     pNodesOfCellC++) {
+	  const Id pId(nodesOfCellC[pNodesOfCellC]);
+	  const size_t pNodes(pId);
+	  cqs_v_nplus1 += dot(m_cqs_nplus1(cCells, pNodesOfCellC),
+			      m_node_velocity_nplus1(pNodes))
+	             * gt->deltat_nplus1;
+	  cqs_v_n += dot(m_cqs_n(cCells, pNodesOfCellC),
+	  		 m_node_velocity_nplus1(pNodes))
+	    * gt->deltat_nplus1 ;	  
+	}
+	double pn = m_pressure_env_n(cCells)[imat];
+	double qn = m_pseudo_viscosity_env_n(cCells)[imat];
+	double qn1= m_pseudo_viscosity_env_nplus1(cCells)[imat];
+	double m  = m_cell_mass_env(cCells)[imat];
+	double r  = m_density_env_nplus1(cCells)[imat];
+	double en = m_internal_energy_env_n(cCells)[imat];
+	double g = eos->gamma[imat];
+        double t = eos->tension_limit[imat];
+	double cn1 = cqs_v_nplus1;
+	double cn = cqs_v_n;
+
+	// les iterations de newton
+	double epsilon = options->threshold;
+	double itermax = 50;
+	double enew=0, e=en, p, c, dpde;
+	int i = 0;
+	while(i<itermax && abs(f(e, p, dpde, en, qn, pn, cn1, cn, m, qn1))>=epsilon)
+	  {
+	    sortie_eos = eos->computeEOS(eos->Nom[imat], g, t, r, e);
+	    p = sortie_eos[0];
+	    c = sortie_eos[1];
+	    dpde = sortie_eos[2];
+	    enew = e - f(e, p, dpde, en, qn, pn, cn1, cn, m, qn1) / fderiv(e, p, dpde, cn1, m);
+	    e = enew;
+	    i++;
+	  }
+	m_internal_energy_env_nplus1(cCells)[imat] = e;
+	m_speed_velocity_env_nplus1(cCells)[imat] = c;
+	m_pressure_env_nplus1(cCells)[imat] = p;
+        m_internal_energy_nplus1(cCells) +=
+            m_mass_fraction_env(cCells)[imat] *
+            m_internal_energy_env_nplus1(cCells)[imat];
+      }
+    }
+    });
 }
 /**
  *******************************************************************************
@@ -714,21 +910,12 @@ void Vnr::computeEOS() {
       double gamma = eos->gamma[imat];
       double tension_limit = eos->tension_limit[imat];
       double sound_speed;  // = m_speed_velocity_env_nplus1(cCells)[imat];
-      RealArray1D<2> sortie_eos;  // pression puis sound_speed
-      if (eos->Nom[imat] == eos->PerfectGas)
-        sortie_eos = eos->computeEOSGP(gamma, density, energy);
-      if (eos->Nom[imat] == eos->Void)
-        sortie_eos = eos->computeEOSVoid(density, energy);
-      if (eos->Nom[imat] == eos->StiffenedGas)
-        sortie_eos =
-            eos->computeEOSSTIFG(gamma, tension_limit, density, energy);
-      if (eos->Nom[imat] == eos->Fictif)
-        sortie_eos = eos->computeEOSFictif(gamma, density, energy);
-      if (eos->Nom[imat] == eos->SolidLinear)
-        sortie_eos = eos->computeEOSSL(density, energy);
+      RealArray1D<3> sortie_eos;  // pression puis sound_speed
       //
+      sortie_eos = eos->computeEOS(eos->Nom[imat], gamma, tension_limit, density, energy);
       m_pressure_env_nplus1(cCells)[imat] = sortie_eos[0];
       m_speed_velocity_env_nplus1(cCells)[imat] = sortie_eos[1];
+      m_dpde_env(cCells)[imat] = sortie_eos[2];
     }
   });
 }
@@ -752,10 +939,14 @@ void Vnr::computePressionMoyenne() noexcept {
                              m_speed_velocity_env_nplus1(cCells)[imat]);
     }
     // NONREG GP A SUPPRIMER
-    if (m_density_nplus1(cCells) > 0.) {
+    if (m_internal_energy_nplus1(cCells) > options->threshold) {
       m_speed_velocity_nplus1(cCells) =
           std::sqrt(eos->gamma[0] * (eos->gamma[0] - 1.0) *
                     m_internal_energy_nplus1(cCells));
+    }
+    if (m_speed_velocity_nplus1(cCells) != m_speed_velocity_nplus1(cCells)) {
+      std::cout << "\n Pb CC" << cCells  << "  " << m_speed_velocity_nplus1(cCells) << "  " << m_internal_energy_nplus1(cCells)
+		<< std::endl;
     }
     for (int imat = 0; imat < options->nbmat; ++imat)
       if (eos->Nom[imat] == eos->Void)

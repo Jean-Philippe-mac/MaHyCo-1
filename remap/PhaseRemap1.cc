@@ -542,7 +542,7 @@ void Remap::computeUremap1() noexcept {
 
         for (int imat = 0; imat < nbmat; imat++) {
           if (Uremap1(cCells)[nbmat + imat] < 0.) {
-            if (abs(Uremap1(cCells)[nbmat + imat]) > 1.e5 * options->threshold)
+            if (abs(Uremap1(cCells)[nbmat + imat]) > 1.e2 * options->threshold)
               std::cout << " cell " << cCells
                         << " proj 1 --masse tres faiblement negative   "
                         << " avant " << Uremap1(cCells - 1)[nbmat + imat]
@@ -552,7 +552,7 @@ void Remap::computeUremap1() noexcept {
             Uremap1(cCells)[nbmat + imat] = 0.;
           }
           if (Uremap1(cCells)[2 * nbmat + imat] < 0.) {
-            if (abs(Uremap1(cCells)[nbmat + imat]) > 1.e5 * options->threshold)
+            if (abs(Uremap1(cCells)[nbmat + imat]) > 1.e2 * options->threshold)
               std::cout << " cell " << cCells
                         << " --energie tres faiblement negative "
                         << " avant " << Uremap1(cCells - 1)[2 * nbmat + imat]

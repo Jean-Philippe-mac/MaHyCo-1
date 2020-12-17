@@ -73,47 +73,50 @@ void Vnr::computeArtificialViscosity() noexcept {
                           reducer);
   Kokkos::parallel_for(nbCells, KOKKOS_LAMBDA(const size_t& cCells) {
     const Id cId(cCells);
-    if (m_divu_n(cCells) < 0.0) {
+    if (m_divu_nplus1(cCells) < 0.0) {
       double reduction0(0.0);
-      {
-        const auto nodesOfCellC(mesh->getNodesOfCell(cId));
-        const size_t nbNodesOfCellC(nodesOfCellC.size());
-        for (size_t pNodesOfCellC = 0; pNodesOfCellC < nbNodesOfCellC;
-             pNodesOfCellC++) {
-          reduction0 =
-              sumR0(reduction0, m_node_cellvolume_n(cCells, pNodesOfCellC));
-        }
+      const auto nodesOfCellC(mesh->getNodesOfCell(cId));
+      const size_t nbNodesOfCellC(nodesOfCellC.size());
+      for (size_t pNodesOfCellC = 0; pNodesOfCellC < nbNodesOfCellC;
+	   pNodesOfCellC++) {
+	reduction0 =
+	  sumR0(reduction0, m_node_cellvolume_nplus1(cCells, pNodesOfCellC));
       }
-      double gamma(
-          eos->gamma[0]);  // a changer en prenant une moyenne des gamma ?
+      // a changer en prenant une moyenne des gamma ?
+      double gamma(eos->gamma[0]);  
       m_pseudo_viscosity_nplus1(cCells) =
           1.0 / m_tau_density_nplus1(cCells) *
           (-0.5 * std::sqrt(reduction0) * m_speed_velocity_n(cCells) *
                m_divu_nplus1(cCells) +
            (gamma + 1) / 2.0 * reduction0 * m_divu_nplus1(cCells) *
-               m_divu_nplus1(cCells));
-    } else
+	   m_divu_nplus1(cCells));
+      
+    } else {
       m_pseudo_viscosity_nplus1(cCells) = 0.0;
+    }
     //
     // limitation par la pression
     // permet de limiter un exces de pseudo lié à des erreurs d'arrondis sur
     // m_tau_density_nplus1
-    if (m_pseudo_viscosity_nplus1(cCells) > reductionP) {
+    //if (m_pseudo_viscosity_nplus1(cCells) > reductionP) {
       //std::cout << cCells << " pseudo " << m_pseudo_viscosity_nplus1(cCells)
       //          << " pression " << m_pressure_n(cCells) << std::endl;
-      m_pseudo_viscosity_nplus1(cCells) = reductionP;
-    }
+      //m_pseudo_viscosity_nplus1(cCells) = reductionP;
+      //}
     // pour chaque matériau
     for (int imat = 0; imat < options->nbmat; ++imat)
       m_pseudo_viscosity_env_nplus1(cCells)[imat] =
           m_fracvol_env(cCells)[imat] * m_pseudo_viscosity_nplus1(cCells);
-    if (m_pseudo_viscosity_nplus1(cCells) != m_pseudo_viscosity_nplus1(cCells)) {
-    for (int imat = 0; imat < options->nbmat; ++imat)
-       std::cout << "\n " << cCells
-	    << " pseudo " << m_pseudo_viscosity_env_nplus1(cCells)[imat]
-	    << " pression " << m_pressure_env_n(cCells)[imat]
-	    << " energie  " << m_internal_energy_env_n(cCells)[imat]
-	    << std::endl;
+    //
+    if (m_pseudo_viscosity_nplus1(cCells) < 0.) {
+      for (int imat = 0; imat < options->nbmat; ++imat)
+	std::cout << "\n Pb pseudo " << cCells
+		  << " pseudo env " << m_pseudo_viscosity_env_nplus1(cCells)[imat]
+		  << " pseudo " << m_pseudo_viscosity_nplus1(cCells)
+		  << " pression " << m_pressure_env_n(cCells)[imat]
+		  << " energie  " << m_internal_energy_env_n(cCells)[imat]
+		  << std::endl;
+      exit(1);
     }
       
   });
@@ -536,12 +539,18 @@ void Vnr::updateEnergy() noexcept {
             ((m_pseudo_viscosity_env_nplus1(cCells)[imat] +
               m_pseudo_viscosity_env_n(cCells)[imat]) *
                  (1.0 / m_density_env_nplus1(cCells)[imat] -
-                  1.0 / m_density_env_n(cCells)[imat]) >
+                  1.0 / m_density_env_n(cCells)[imat]) <
              0.)) {
           pseudo = 0.5 * (m_pseudo_viscosity_env_nplus1(cCells)[imat] +
                           m_pseudo_viscosity_env_n(cCells)[imat]);
         }
-        if (options->pseudo_centree == 0) {
+        if (options->pseudo_centree == 0
+	    &&
+            ((m_pseudo_viscosity_env_nplus1(cCells)[imat]) *
+                 (1.0 / m_density_env_nplus1(cCells)[imat] -
+                  1.0 / m_density_env_n(cCells)[imat]) <
+             0.)
+	    ) {
 	  // test sur la positivité du travail dans le calcul de
 	  // m_pseudo_viscosity_nplus1(cCells)
           pseudo = m_pseudo_viscosity_env_nplus1(cCells)[imat];
@@ -601,16 +610,25 @@ void Vnr::updateEnergyite() noexcept {
           (m_density_env_n(cCells)[imat] > options->threshold)) {
         // calcul du DV a changer utiliser divU
         double pseudo(0.);
-        if ((options->pseudo_centree == 1) &&
+        if ((options->pseudo_centree == 1)
+	    &&
             ((m_pseudo_viscosity_env_nplus1(cCells)[imat] +
               m_pseudo_viscosity_env_n(cCells)[imat]) *
                  (1.0 / m_density_env_nplus1(cCells)[imat] -
-                  1.0 / m_density_env_n(cCells)[imat]) >
-             0.)) {
+                  1.0 / m_density_env_n(cCells)[imat]) <
+             0.)
+	    ) {
           pseudo = 0.5 * (m_pseudo_viscosity_env_nplus1(cCells)[imat] +
                           m_pseudo_viscosity_env_n(cCells)[imat]);
         }
-        if (options->pseudo_centree == 0) {
+        if (options->pseudo_centree == 0
+	    &&
+            ((m_pseudo_viscosity_env_nplus1(cCells)[imat]) *
+                 (1.0 / m_density_env_nplus1(cCells)[imat] -
+                  1.0 / m_density_env_n(cCells)[imat]) <
+             0.)
+	    ) {
+	 
 	  // test sur la positivité du travail dans le calcul de
 	  // m_pseudo_viscosity_nplus1(cCells)
           pseudo = m_pseudo_viscosity_env_nplus1(cCells)[imat];
@@ -723,7 +741,7 @@ void Vnr::updateEnergycsts() noexcept {
  *******************************************************************************
  */
 /** */
-/* la fonction dont on cherche un zero */
+/* la fonction dont on cherche le zero */
 /** */
 inline double f(double e, double p,double dpde,
 		double en,double qn, double pn, double cn1,
@@ -921,10 +939,14 @@ void Vnr::computePressionMoyenne() noexcept {
                              m_speed_velocity_env_nplus1(cCells)[imat]);
     }
     // NONREG GP A SUPPRIMER
-    if (m_density_nplus1(cCells) > 0.) {
+    if (m_internal_energy_nplus1(cCells) > options->threshold) {
       m_speed_velocity_nplus1(cCells) =
           std::sqrt(eos->gamma[0] * (eos->gamma[0] - 1.0) *
                     m_internal_energy_nplus1(cCells));
+    }
+    if (m_speed_velocity_nplus1(cCells) != m_speed_velocity_nplus1(cCells)) {
+      std::cout << "\n Pb CC" << cCells  << "  " << m_speed_velocity_nplus1(cCells) << "  " << m_internal_energy_nplus1(cCells)
+		<< std::endl;
     }
     for (int imat = 0; imat < options->nbmat; ++imat)
       if (eos->Nom[imat] == eos->Void)
